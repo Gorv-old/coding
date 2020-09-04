@@ -1,32 +1,127 @@
-{
-	//Movement
-	public float speed; (10f) // 10f = movementSpeed
-	private RigidBody2D rb; // Gets the rigidbody2D of object this scritp is on
-	
-	//Jump	
-	Public float jumpForce; 7.575f = Force of the jump
-	public bool onGround; // checks if object is on the ground
-	public layerMask GroundLayer // checks if object is on the ground
-	public transform GroundCheck // checks if object is on the ground
-	
-	
-	void start() {
-		//Movement
-		rb = GetCoponent.RigidBody2D(); // Gets the rigidbody2D of object this scritp is on
-	}	
-		
-	void update() {
-		//Movement
-		vector3 moveInput = new Vector3 (getAxisRaw(Horizontal)); // Gets a value of 1 to -1, dont remember if its vector2 or 3. // a = -1 // d = 1
-		rb.velocity = moveInput * speed * Time.DeltaTime; // gives object velocity, if you press <A> you go <-- if you press <D> you go -->
-		
-		//Jump
-		onGround = GroundLayer, GroundCheck; // I dont remember what to do here!
-		
-		if(getKeyDown.(KeyCode.Space) && onGround == true) {
-				
-			rb.Velocity.up * jumpForce; // jumps;	
-				
-		}
-	}
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Movement : MonoBehaviour {
+    [Header("Walking!")]
+    public float speed;
+    public Vector2 direction;
+    public bool facingRight;
+
+    [Header("Jumping!")]
+    public float jumpForce;
+    public float jumpDelay;
+    private float jumpTimer;
+
+    [Header("Physics!")]
+    public float maxSpeed;
+    public float linearDrag;
+    public float gravity;
+    public float fallMultiplier;
+
+    [Header("Components!")]
+    private Rigidbody2D rb;
+    public Animator animator;
+    public LayerMask groundLayer;
+    public ParticleSystem dust;
+
+    [Header("Collisions!")]
+    public bool onGround = false;
+    public float groundLength;
+    public Vector3 colliderOffset;
+
+    void Start() {
+
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+    }
+
+    void Update() {
+
+        direction = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            jumpTimer = Time.time + jumpDelay;
+        }
+
+        onGround = Physics2D.Raycast(transform.position + colliderOffset, Vector2.down, groundLength, groundLayer) || Physics2D.Raycast(transform.position - colliderOffset, Vector2.down, groundLength, groundLayer);
+    }
+
+    void FixedUpdate() {
+
+        moveCharacter(direction.x);
+        if(jumpTimer > Time.time && onGround) {
+            jump();
+        }
+        modifyPhysics();
+    }
+
+    void jump()
+    {
+        CreateDust();
+        rb.velocity = new Vector2(rb.velocity.x, 0);
+        rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        jumpTimer = 0;
+    }
+
+    void modifyPhysics() {
+
+        bool changingDirections = (direction.x > 0 && rb.velocity.x < 0) || (direction.x < 0 && rb.velocity.x > 0);
+        if(onGround) {
+
+            if (Mathf.Abs(direction.x) < 0.4f || changingDirections) {
+                rb.drag = linearDrag;
+            } else {
+                rb.drag = 0f;
+            }
+            rb.gravityScale = 0;
+        } else {
+            rb.gravityScale = gravity;
+            rb.drag = linearDrag * 0.15f;
+            if(rb.velocity.y < 0)
+            {
+                rb.gravityScale = gravity * fallMultiplier;
+            } else if(rb.velocity.y > 0 && !Input.GetButton("Jump")) {
+                rb.gravityScale = gravity * (fallMultiplier / 2);
+            }
+        }
+    }
+    void moveCharacter(float horizontal) {
+
+        rb.AddForce(Vector2.right * horizontal * speed);
+
+        animator.SetFloat("horizontal", Mathf.Abs(rb.velocity.x));
+        animator.SetFloat("vertical", rb.velocity.y);
+
+        if (horizontal > 0 && facingRight == true) {
+            Flip();
+        } else if (horizontal < 0 && facingRight == false) {
+            Flip();
+        }
+
+        if(Mathf.Abs(rb.velocity.x) > maxSpeed) {
+
+            rb.velocity = new Vector2(Mathf.Sign(rb.velocity.x) * maxSpeed, rb.velocity.y);
+        }
+    }
+
+    void Flip() {
+
+        CreateDust();
+        facingRight = !facingRight;
+        transform.rotation = Quaternion.Euler(0, facingRight ? 180 : 0, 0);
+    }
+
+    void OnDrawGizmos() {
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(transform.position + colliderOffset, transform.position + colliderOffset +Vector3.down * groundLength);
+        Gizmos.DrawLine(transform.position - colliderOffset, transform.position - colliderOffset + Vector3.down * groundLength);
+    }
+
+    void CreateDust()
+    {
+        dust.Play();
+    }
 }
+Code in c# unity 2D
