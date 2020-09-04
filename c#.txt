@@ -1,0 +1,32 @@
+{
+	//Movement
+	public float speed; (10f) // 10f = movementSpeed
+	private RigidBody2D rb; // Gets the rigidbody2D of object this scritp is on
+	
+	//Jump	
+	Public float jumpForce; 7.575f = Force of the jump
+	public bool onGround; // checks if object is on the ground
+	public layerMask GroundLayer // checks if object is on the ground
+	public transform GroundCheck // checks if object is on the ground
+	
+	
+	void start() {
+		//Movement
+		rb = GetCoponent.RigidBody2D(); // Gets the rigidbody2D of object this scritp is on
+	}	
+		
+	void update() {
+		//Movement
+		vector3 moveInput = new Vector3 (getAxisRaw(Horizontal)); // Gets a value of 1 to -1, dont remember if its vector2 or 3. // a = -1 // d = 1
+		rb.velocity = moveInput * speed * Time.DeltaTime; // gives object velocity, if you press <A> you go <-- if you press <D> you go -->
+		
+		//Jump
+		onGround = GroundLayer, GroundCheck; // I dont remember what to do here!
+		
+		if(getKeyDown.(KeyCode.Space) && onGround == true) {
+				
+			rb.Velocity.up * jumpForce; // jumps;	
+				
+		}
+	}
+}

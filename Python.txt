@@ -1,0 +1,24 @@
+ //Admin
+
+public admin.username
+public admin.password
+public admin.login
+ //User
+
+public user.name
+public password
+public login.user
+//Admin
+
+admin.login = admin.username + admin.password
+//User
+
+login.user = user.name + password
+
+if(user.name = admin.username) {
+	admin.login
+	print("Welcome admin.username" + "!")
+} else {
+	login.user
+	print("Welcome user.name" + "!")
+}
