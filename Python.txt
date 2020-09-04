@@ -1,24 +1,18 @@
- //Admin
+admin_user_input = input("What is your name? ")
 
-public admin.username
-public admin.password
-public admin.login
- //User
+if admin_user_input == "Admin":
+    print("Welcome Admin!")
+else:
+    print("Wrong username!")
 
-public user.name
-public password
-public login.user
-//Admin
+admin_user_password_input = input("What is your password? ")
 
-admin.login = admin.username + admin.password
-//User
+if admin_user_password_input == "Admin":
+    print("Correct password!")
+else:
+    print("Wrong password!")
 
-login.user = user.name + password
+print("You are now getting terminated!")
 
-if(user.name = admin.username) {
-	admin.login
-	print("Welcome admin.username" + "!")
-} else {
-	login.user
-	print("Welcome user.name" + "!")
-}
+*//This code is in python!\\*
+*//Username and password is Admin\\*
