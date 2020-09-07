@@ -1,18 +1,18 @@
+username_right_input = "Olav"
+password_right_input = "postkasse"
+
 admin_user_input = input("What is your name? ")
 
-if admin_user_input == "Admin":
-    print("Welcome Admin!")
+if admin_user_input == username_right_input:
+    print("Welcome " + admin_user_input + "!")
 else:
-    print("Wrong username!")
+    print("Wrong username " + username_right_input + " this is!")
 
 admin_user_password_input = input("What is your password? ")
 
-if admin_user_password_input == "Admin":
+if admin_user_password_input == password_right_input:
     print("Correct password!")
 else:
-    print("Wrong password!")
+    print("Wrong password " + password_right_input + " this is your password!")
 
-print("You are now getting terminated!")
-
-*//This code is in python!\\*
-*//Username and password is Admin\\*
+code in python
