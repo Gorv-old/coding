@@ -1,5 +1,5 @@
-username_right_input = "Olav"
-password_right_input = "postkasse"
+username_right_input = "username"
+password_right_input = "password"
 
 admin_user_input = input("What is your name? ")
 
