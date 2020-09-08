@@ -1,18 +1,16 @@
-username_right_input = "username"
-password_right_input = "password"
+username_right_input = "Admin"
+password_right_input = "admin"
 
 admin_user_input = input("What is your name? ")
 
 if admin_user_input == username_right_input:
     print("Welcome " + admin_user_input + "!")
 else:
-    print("Wrong username " + username_right_input + " this is!")
+    print("Wrong username, This is your username: " + username_right_input + "!")
 
 admin_user_password_input = input("What is your password? ")
 
 if admin_user_password_input == password_right_input:
     print("Correct password!")
 else:
-    print("Wrong password " + password_right_input + " this is your password!")
-
-code in python
+    print("Wrong password, This is your password " + password_right_input + "!")
