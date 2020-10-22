@@ -1,0 +1,115 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Movements : MonoBehaviour
+{
+
+    private Rigidbody2D rb;
+    private Animator anim;
+
+    [Header("Moving")]
+
+    public float speed;
+
+    public bool facingRight;
+
+    private float moveInput;
+
+    [Header("Jumping")]
+
+    public float jumpForce;
+    public float gravity;
+    public float fallMultiplier;
+
+    //Quality of life!
+    public float jumpDelay;
+    private float jumpTimer;
+
+    //Detecting ground!
+    public bool isGrounded;
+
+    public LayerMask groundLayer;
+    public float groundLength;
+    public Vector3 colliderOffset;
+
+    /*public Transform feetPos;
+    public float cheekRadius;
+    public LayerMask whatIsGround;*/
+
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        //Animation
+
+        if(Input.GetKey(KeyCode.LeftArrow) || (Input.GetKey(KeyCode.RightArrow))){
+            anim.SetBool("isMoving", true);
+        } else {
+            anim.SetBool("isMoving", false);
+        }
+
+        //Jumping
+
+        //isGrounded = Physics2D.OverlapCircle(feetPos.position, cheekRadius, whatIsGround);
+        isGrounded = Physics2D.Raycast(transform.position + colliderOffset, Vector2.down, groundLength, groundLayer) || Physics2D.Raycast(transform.position - colliderOffset, Vector2.down, groundLength, groundLayer);
+
+        if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.Space))
+        {
+            jumpTimer = Time.time + jumpDelay;
+        }
+
+        if (!Input.GetKey(KeyCode.Z) || (!Input.GetKey(KeyCode.Space)))
+        {
+            rb.gravityScale = gravity * (fallMultiplier / 2);
+        }
+
+        /*if (isGrounded == true && Input.GetKeyDown(KeyCode.Z))
+        {
+            rb.velocity = Vector2.up * jumpForce;
+        }*/
+    }
+
+    void FixedUpdate()
+    {
+        moveInput = Input.GetAxis("Horizontal");
+        rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
+
+        if (jumpTimer > Time.time && isGrounded)
+        {
+            Jump();
+        }
+
+        if (facingRight == false && moveInput > 0) {
+            Flip();
+        } else if (facingRight == true && moveInput < 0) {
+            Flip();
+        }
+    }
+
+    void Jump()
+    {
+        rb.velocity = Vector2.up * jumpForce;
+    }
+
+    void Flip()
+    {
+        facingRight = !facingRight;
+        Vector3 Scaler = transform.localScale;
+        Scaler.x *= -1;
+        transform.localScale = Scaler;
+    }
+
+    void OnDrawGizmos()
+    {
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(transform.position + colliderOffset, transform.position + colliderOffset + Vector3.down * groundLength);
+        Gizmos.DrawLine(transform.position - colliderOffset, transform.position - colliderOffset + Vector3.down * groundLength);
+    }
+}
