@@ -19,44 +19,87 @@ public class Movements : MonoBehaviour
     [Header("Jumping")]
 
     public float jumpForce;
-    public float gravity;
-    public float fallMultiplier;
 
-    //Quality of life!
+    public float fallMultiplier;
+    public float lowJumpMultiplier;
+
+    //Quality of life
     public float jumpDelay;
     private float jumpTimer;
 
-    //Detecting ground!
+    //Detecting ground
     public bool isGrounded;
 
     public LayerMask groundLayer;
     public float groundLength;
     public Vector3 colliderOffset;
 
-    /*public Transform feetPos;
-    public float cheekRadius;
-    public LayerMask whatIsGround;*/
+    [Header("Wall jump / slide")]
 
+    //Wall slide
+
+    bool isThouchingRight;
+    public Transform rightCheck;
+    bool wallSliding;
+    public float wallSlidingSpeed;
+    public float chekRadius;
+
+    //Wall jump
+
+    bool wallJumping;
+    public float wallJumpTime;
+    public float wallJumpForce;
+    public float wallJumpSpeed;
+    public bool canWallJump;
+    public float timeUntilWallJump;
+
+    [Header("Quality")]
+
+    public ParticleSystem dust;
+
+    public Transform camTarget;
+    public float aheadAmount, aheadSpeed;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
+
+        canWallJump = true;
     }
 
     void Update()
     {
         //Animation
 
-        if(Input.GetKey(KeyCode.LeftArrow) || (Input.GetKey(KeyCode.RightArrow))){
-            anim.SetBool("isMoving", true);
-        } else {
-            anim.SetBool("isMoving", false);
+        if(isGrounded == true) {
+
+            anim.SetBool("isJumping", false);
+            anim.SetBool("wallSliding", false);
+
+            if (Input.GetKey(KeyCode.LeftArrow) || (Input.GetKey(KeyCode.RightArrow) || (Input.GetKey(KeyCode.A) || (Input.GetKey(KeyCode.D)))))
+            {
+                anim.SetBool("isMoving", true);
+
+            } else {
+
+                anim.SetBool("isMoving", false);
+            }
+
+        } else if(isGrounded == false && wallSliding == false) {
+
+            anim.SetBool("isJumping", true);
+            anim.SetBool("wallSliding", false);
+
+        } else if (wallSliding == true && isGrounded == false) {
+
+            anim.SetBool("wallSliding", true);
+            anim.SetBool("isJumping", false);
+
         }
 
         //Jumping
 
-        //isGrounded = Physics2D.OverlapCircle(feetPos.position, cheekRadius, whatIsGround);
         isGrounded = Physics2D.Raycast(transform.position + colliderOffset, Vector2.down, groundLength, groundLayer) || Physics2D.Raycast(transform.position - colliderOffset, Vector2.down, groundLength, groundLayer);
 
         if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.Space))
@@ -64,37 +107,92 @@ public class Movements : MonoBehaviour
             jumpTimer = Time.time + jumpDelay;
         }
 
-        if (!Input.GetKey(KeyCode.Z) || (!Input.GetKey(KeyCode.Space)))
+        if(Input.GetKeyUp(KeyCode.Z) || (Input.GetKeyUp(KeyCode.Space) && rb.velocity.y > 0))
         {
-            rb.gravityScale = gravity * (fallMultiplier / 2);
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * .5f);
         }
 
-        /*if (isGrounded == true && Input.GetKeyDown(KeyCode.Z))
+        //Better jumping
+        if (rb.velocity.y < 0) {
+
+            rb.velocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
+
+        } else if (rb.velocity.y > 0 && !Input.GetKey(KeyCode.Z) || !Input.GetKey(KeyCode.Space)) {
+
+            rb.velocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
+
+        }
+
+        //Wall sliding
+
+        isThouchingRight = Physics2D.OverlapCircle(rightCheck.position, chekRadius, groundLayer);
+
+        if ((isThouchingRight == true) && isGrounded == false && moveInput != 0)
         {
-            rb.velocity = Vector2.up * jumpForce;
-        }*/
+            wallSliding = true;
+        } else {
+            wallSliding = false;
+        }
+
+        if(wallSliding)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, Mathf.Clamp(rb.velocity.y, -wallSlidingSpeed, float.MaxValue));
+        }
+
+        //Wall jumping
+
+        if(canWallJump == true)
+        {
+            if ((Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.Space)) && (isThouchingRight) && !isGrounded && wallSliding == true)
+            {
+                wallJumping = true;
+                Invoke("SetWallJumpingToFalse", wallJumpTime);
+            }
+
+            if (wallJumping == true)
+            {
+                rb.velocity = new Vector2(wallJumpSpeed * -moveInput, wallJumpForce);
+                canWallJump = false;
+                Invoke("AbleToWallJump", timeUntilWallJump);
+            }
+        }
+
+        //Move camera point
+        if (Input.GetAxisRaw("Horizontal") != 0)
+        {
+            camTarget.localPosition = new Vector3(Mathf.Lerp(camTarget.localPosition.x, aheadAmount * Input.GetAxisRaw("Horizontal"), aheadSpeed * Time.deltaTime), camTarget.localPosition.y, camTarget.localPosition.z);
+        }
     }
 
     void FixedUpdate()
     {
         moveInput = Input.GetAxis("Horizontal");
-        rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
+        if((!isThouchingRight) || isGrounded)
+        {
+            rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
+        }
 
         if (jumpTimer > Time.time && isGrounded)
         {
             Jump();
         }
 
-        if (facingRight == false && moveInput > 0) {
-            Flip();
-        } else if (facingRight == true && moveInput < 0) {
-            Flip();
-        }
+        if (moveInput != 0 && (moveInput > 0) != facingRight) Flip();
     }
 
     void Jump()
     {
         rb.velocity = Vector2.up * jumpForce;
+    }
+
+    void SetWallJumpingToFalse()
+    {
+        wallJumping = false;
+    }
+
+    void AbleToWallJump()
+    {
+        canWallJump = true;
     }
 
     void Flip()
@@ -103,6 +201,11 @@ public class Movements : MonoBehaviour
         Vector3 Scaler = transform.localScale;
         Scaler.x *= -1;
         transform.localScale = Scaler;
+
+        if (isGrounded == true)
+        {
+            CreateDust();
+        }
     }
 
     void OnDrawGizmos()
@@ -111,5 +214,11 @@ public class Movements : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawLine(transform.position + colliderOffset, transform.position + colliderOffset + Vector3.down * groundLength);
         Gizmos.DrawLine(transform.position - colliderOffset, transform.position - colliderOffset + Vector3.down * groundLength);
+    }
+
+    //Particles
+    void CreateDust()
+    {
+        dust.Play();
     }
 }
