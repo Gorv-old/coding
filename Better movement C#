@@ -10,55 +10,51 @@ public class Movements : MonoBehaviour
 
     [Header("Moving")]
 
-    public float speed;
-
-    public bool facingRight;
-
+    public float speed; //5.7
+    public bool facingRight; //True
     private float moveInput;
 
     [Header("Jumping")]
 
-    public float jumpForce;
+    public float jumpForce; //7.5
 
-    public float fallMultiplier;
-    public float lowJumpMultiplier;
+    public float fallMultiplier; //2.5
+    public float lowJumpMultiplier; //1.5
 
     //Quality of life
-    public float jumpDelay;
+    public float jumpDelay; //0.125
     private float jumpTimer;
 
     //Detecting ground
     public bool isGrounded;
 
-    public LayerMask groundLayer;
-    public float groundLength;
-    public Vector3 colliderOffset;
+    public LayerMask groundLayer; //Ground
+    public float groundLength; //0.13
+    public Vector3 colliderOffset; // x0.35 y0 z0
 
     [Header("Wall jump / slide")]
 
     //Wall slide
 
     bool isThouchingRight;
-    public Transform rightCheck;
+    public Transform rightCheckBottom;
+    public Transform rightCheckTop;
     bool wallSliding;
-    public float wallSlidingSpeed;
-    public float chekRadius;
+    public float wallSlidingSpeed; //4
+    public float checkRadius; //0.1
 
     //Wall jump
 
     bool wallJumping;
-    public float wallJumpTime;
-    public float wallJumpForce;
-    public float wallJumpSpeed;
+    public float wallJumpTime; //0.05
+    public float wallJumpSpeed; //20
+    public float wallJumpForce; //8
     public bool canWallJump;
-    public float timeUntilWallJump;
+    public float timeUntilWallJump; //0.15
 
     [Header("Quality")]
 
     public ParticleSystem dust;
-
-    public Transform camTarget;
-    public float aheadAmount, aheadSpeed;
 
     void Start()
     {
@@ -102,30 +98,30 @@ public class Movements : MonoBehaviour
 
         isGrounded = Physics2D.Raycast(transform.position + colliderOffset, Vector2.down, groundLength, groundLayer) || Physics2D.Raycast(transform.position - colliderOffset, Vector2.down, groundLength, groundLayer);
 
-        if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.Space))
+        if ((Input.GetButtonDown("Jump") || Input.GetButtonDown("Jump2")))
         {
             jumpTimer = Time.time + jumpDelay;
         }
 
-        if(Input.GetKeyUp(KeyCode.Z) || (Input.GetKeyUp(KeyCode.Space) && rb.velocity.y > 0))
+        if ((Input.GetButtonUp("Jump") || Input.GetButtonUp("Jump2") && rb.velocity.y > 0))
         {
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * .5f);
         }
 
         //Better jumping
+
         if (rb.velocity.y < 0) {
 
             rb.velocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
 
-        } else if (rb.velocity.y > 0 && !Input.GetKey(KeyCode.Z) || !Input.GetKey(KeyCode.Space)) {
+        } else if (rb.velocity.y > 0 && (!Input.GetButtonDown("Jump") || !Input.GetButtonDown("Jump2"))) {
 
             rb.velocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
-
         }
 
         //Wall sliding
 
-        isThouchingRight = Physics2D.OverlapCircle(rightCheck.position, chekRadius, groundLayer);
+        isThouchingRight = Physics2D.OverlapCircle(rightCheckBottom.position, checkRadius, groundLayer) || Physics2D.OverlapCircle(rightCheckTop.position, checkRadius, groundLayer);
 
         if ((isThouchingRight == true) && isGrounded == false && moveInput != 0)
         {
@@ -143,24 +139,18 @@ public class Movements : MonoBehaviour
 
         if(canWallJump == true)
         {
-            if ((Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.Space)) && (isThouchingRight) && !isGrounded && wallSliding == true)
+            if (((Input.GetButtonDown("Jump") || Input.GetButtonDown("Jump2"))) && (isThouchingRight) && !isGrounded && wallSliding == true)
             {
                 wallJumping = true;
                 Invoke("SetWallJumpingToFalse", wallJumpTime);
             }
 
-            if (wallJumping == true)
+            if (wallJumping == true && canWallJump == true)
             {
                 rb.velocity = new Vector2(wallJumpSpeed * -moveInput, wallJumpForce);
                 canWallJump = false;
                 Invoke("AbleToWallJump", timeUntilWallJump);
             }
-        }
-
-        //Move camera point
-        if (Input.GetAxisRaw("Horizontal") != 0)
-        {
-            camTarget.localPosition = new Vector3(Mathf.Lerp(camTarget.localPosition.x, aheadAmount * Input.GetAxisRaw("Horizontal"), aheadSpeed * Time.deltaTime), camTarget.localPosition.y, camTarget.localPosition.z);
         }
     }
 
